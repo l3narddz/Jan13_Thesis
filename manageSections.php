@@ -40,22 +40,13 @@
   			</fieldset>
   			<fieldset>
           <label for="active"><b>Status</b></label>
-  				<input type="radio" name="orgActive" class="active" value="orgActive">Active
-  	       <input type="radio" name="orgNotActive" class="active" value="orgNotActive" checked="checked">Not Active
+  				<input type="radio" name="isActive"  value="1" checked="checked">Active
+  	       <input type="radio" name="isActive"  value="0" >Not Active
 
   			</fieldset>
   			<button type="submit" id ="sectionBtn" name="sectionBtn" class="btn btn-primary">Add Section</button>
   		</form>
   	</div>
-
-  	<!--User table
-  	<div class="section">
-  		<div class="slideInRight animated">
-  			<div id="manage_users"></div>
-  		</div>
-  	</div>
-    -->
-
 
     <div class="section">
         <!--User table-->
@@ -65,9 +56,9 @@
               <tr>
                 <th>Name</th>
                 <th>Capacity</th>
+                <th>Status</th>
+                <th>Students</th>
                 <th>Action</th>
-
-
               </tr>
             </thead>
             <tbody class="table-secondary">
@@ -84,23 +75,22 @@
                             <TR>
                             <TD><?php echo $row['sectionName'];?></TD>
                             <TD><?php echo $row['numberOfstudents'];?></TD>
+                            <TD>  <?php
+                            if ($row['isActive'] == 1) {
+                              echo "ACTIVE";
+                            } else {
+                              echo "INACTIVE";
+                            }
+                            ?></TD>
+                            <TD><?php echo $row['isActive'];?></TD>
                             <td>
-                              <form class="form-left" action="update.php" method="post">
-                              <input type="hidden" name="appointmentID" value="<?php echo $row['appointmentID'] ?>"
-                              <th> <input type ="submit" name="edit" class = "btn btn-success btn-sm "value ="Edit" /></th>
+                            <button class="btn btn-secondary btn-sm edit-btn" data-section-id="<?php echo $row['sectionID']; ?>">Edit</button>
+                            <form class="form-right" action="deleteSection.php" method="post">
+                              <input type="hidden" name="sectionID" value="<?php echo $row['sectionID'] ?>"
+                              <button class="btn btn-danger btn-sm delete-btn" type="submit" name="delete" onclick="return confirmDelete()">Delete</button>
                             </form>
-
-                              <form class="form-right" action="deleteSection.php" method="post" onsubmit="return confirmDelete()">
-                                <input type="hidden" name="sectionID" value="<?php echo $row['sectionID'] ?>"
-                                <th>
-                                  <input type ="submit" name="delete" class="btn btn-danger btn-sm" value="Delete" />
-                                </th>
-                              </form>
-                            </td>
+                          </td>
                           </TR>
-                            <!--<input type ="submit" name="edit" class="btn btn-success" value="Edit" /> -->
-                            <!--<button id = "updateAppointmentBtn" type="submit" class="btn btn-primary" data-toggle="modal" data-target="#updateAppointmentModal">Edit</button>-->
-
               <?php
                       }
               ?>
@@ -108,6 +98,40 @@
           </table>
         </div>
     </div>
+    <!-- Modal -->
+<div class="modal fade" id="addSectionModal" tabindex="-1" role="dialog" aria-labelledby="addSectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addSectionModalLabel">Edit Section</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action ="updateSection.php" method="POST" name="addSectionFrm" id="addSectionFrm">
+          <div class="alert_user"></div>
+          <fieldset>
+            <legend><span class="number">1</span> Section Info</legend>
+            <input type="hidden" name="sectionID" id="sectionID">
+            <input type="text" name="sectionName" id="sectionName" placeholder="Section Name..." required>
+            <input type="text" name="sectionCapacity" id="sectionCapacity" placeholder="Section capacity..." required>
+          </fieldset>
+          <fieldset>
+            <label for="active"><b>Status</b></label>
+            <input type="radio" name="isActive"  value="1" checked="checked">Active
+            <input type="radio" name="isActive"  value="0" >Not Active
+          </fieldset>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="submit" id ="sectionBtn" name="sectionBtn" class="btn btn-primary">Update Section</button>
+      </div>
+    </div>
+  </div>
+</div>
+
   </main>
   <script type="text/javascript">
   function confirmDelete() {
@@ -118,5 +142,46 @@
       }
   }
   </script>
+
+  <script type="text/javascript">
+  $(document).ready(function() {
+    // Attach click event listener to edit buttons
+    $('.edit-btn').on('click', function() {
+      var sectionId = $(this).data('section-id');
+      $('#sectionID').val(sectionId);
+      $('#addSectionFrm').attr('action', 'updateSection.php');
+      $('#sectionBtn').text('Update Section');
+      $('#addSectionModal').modal('show');
+    });
+
+    // Attach click event listener to delete buttons
+    $('.delete-btn').on('click', function() {
+      if (confirm('Are you sure you want to delete this section?')) {
+        //submit the delete form
+        $(this).closest('form').submit();
+      }
+    });
+
+    // Populate form fields when modal is shown
+    $('#addSectionModal').on('show.bs.modal', function (event) {
+      var button = $(event.relatedTarget);
+      var sectionId = button.data('section-id');
+      // Use an Ajax request to retrieve the section details from the server
+      $.ajax({
+        url: 'getSection.php',
+        type: 'POST',
+        data: {
+          sectionID: sectionId
+        },
+        success: function(data) {
+          var section = JSON.parse(data);
+          $('#sectionName').val(section.sectionName);
+          $('#sectionCapacity').val(section.sectionCapacity);
+          $("input[name=isActive][value=" + section.isActive + "]").attr('checked', 'checked');
+        }
+      });
+    });
+  });
+</script>
 </body>
 </html>
